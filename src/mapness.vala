@@ -11,7 +11,7 @@
     Mapness was, of course, heavily inspired by the OsmGpsMap widget.
 
     Please see https://github.com/nzjrs/osm-gps-map
-    for the list of original authors.
+    for the list of OsmGpsMap authors.
 
     This file is part of mapness.
 
