@@ -3,35 +3,60 @@
 
     This file is part of mapness.
 
-    Foobar is free software: you can redistribute it and/or modify
+    mapness is free software: you can redistribute it and/or modify
     it under the terms of the Lesser GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    mapness is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     Lesser GNU General Public License for more details.
 
     You should have received a copy of the Lesser GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with mapness.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 namespace mapness
 {
 
+/**
+ * A polygon is a special type of track with the first and last points of the track are
+ * joined together.
+ * Polygons can also be filled with a colour.
+ */
+
 public class Polygon: Track
 {
+    /**************************************************************************
+    ***************************************************************************
+    ________  ___  ___  ________  ___       ___  ________
+    |\   __  \|\  \|\  \|\   __  \|\  \     |\  \|\   ____\
+    \ \  \|\  \ \  \\\  \ \  \|\ /\ \  \    \ \  \ \  \___|
+    \ \   ____\ \  \\\  \ \   __  \ \  \    \ \  \ \  \
+     \ \  \___|\ \  \\\  \ \  \|\  \ \  \____\ \  \ \  \____
+      \ \__\    \ \_______\ \_______\ \_______\ \__\ \_______\
+       \|__|     \|_______|\|_______|\|_______|\|__|\|_______|
+
+    ***************************************************************************
+    **************************************************************************/
+
     public Polygon()
     {
         fill_center = false;
-        breakable = true;
         fill_color = Gdk.RGBA();
         fill_color.parse("rgba(255, 255, 0, 0.9)");
     }
 
+    /**
+     * If true, the center of the polygon will be filled with the fill_color.
+     */
     public bool fill_center { get; set; }
-    public bool breakable { get; set; }
+
+    /**
+     * The fill colour. Default colour is yellow with a hint of transparency.
+     * It's pretty cool hey.
+     */
     public Gdk.RGBA fill_color { get; set; }
 }
 

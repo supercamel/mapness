@@ -15,18 +15,18 @@
 
     This file is part of mapness.
 
-    Foobar is free software: you can redistribute it and/or modify
+    mapness is free software: you can redistribute it and/or modify
     it under the terms of the Lesser GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    mapness is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     Lesser GNU General Public License for more details.
 
     You should have received a copy of the Lesser GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with mapness.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 using Gtk;
@@ -37,13 +37,22 @@ namespace mapness
 
 public class Map: DrawingArea
 {
-    //string get_default_cache_dir();
-    //void download_maps(Point p1, Point p1, int zoom_start);
+/******************************************************************************
+*******************************************************************************
+________  ___  ___  ________  ___       ___  ________
+|\   __  \|\  \|\  \|\   __  \|\  \     |\  \|\   ____\
+\ \  \|\  \ \  \\\  \ \  \|\ /\ \  \    \ \  \ \  \___|
+\ \   ____\ \  \\\  \ \   __  \ \  \    \ \  \ \  \
+ \ \  \___|\ \  \\\  \ \  \|\  \ \  \____\ \  \ \  \____
+  \ \__\    \ \_______\ \_______\ \_______\ \__\ \_______\
+   \|__|     \|_______|\|_______|\|_______|\|__|\|_______|
 
+*******************************************************************************
+******************************************************************************/
 
     public Map()
     {
-        map_source = Source.GoogleHybrid;
+        map_source = Source.GOOGLEHYBRID;
         repo_uri = map_source.get_uri();
         uri_format = get_uri_format(repo_uri);
         cache_dir = get_default_cache_dir();
@@ -194,18 +203,9 @@ public class Map: DrawingArea
             });
     }
 
-    private bool redraw_canvas ()
-    {
-        var window = get_window ();
-        if (null == window)
-            return false;
-
-        var region = window.get_clip_region ();
-        window.invalidate_region (region, true);
-        window.process_updates (true);
-        return false;
-    }
-
+/**
+ * Sets the map source. Maps are sourced from GoogleHybrid by default.
+ */
     public void set_source(Source source)
     {
         map_source = source;
@@ -216,54 +216,83 @@ public class Map: DrawingArea
         idle_redraw();
     }
 
+/**
+ * Adds an image to the map.
+ */
     public void add_image(Image img)
     {
         images.append(img);
         idle_redraw();
     }
 
+/**
+ * Removes an image from the map.
+ */
     public void remove_image(Image img)
     {
         images.remove(img);
         idle_redraw();
     }
 
+/**
+ * Adds a track to the map.
+ */
     public void add_track(Track track)
     {
         tracks.append(track);
         idle_redraw();
     }
 
+/**
+ * Removes a track from the map.
+ */
     public void remove_track(Track track)
     {
         tracks.remove(track);
         idle_redraw();
     }
 
+/**
+ * Adds a polygon to the map.
+ */
     public void add_polygon(Polygon poly)
     {
         polygons.append(poly);
         idle_redraw();
     }
 
+/**
+ * Removes a polygon from the map.
+ */
     public void remove_polygon(Polygon poly)
     {
         polygons.remove(poly);
         idle_redraw();
     }
 
+/**
+ * Adds a layer to the map.
+ * Layers can be used to draw on the map with Cairo.
+ * They also receive some mouse events.
+ */
     public void add_layer(Layer layer)
     {
         layers.append(layer);
         idle_redraw();
     }
 
+/**
+ * Removes a layer from the map.
+ */
     public void remove_layer(Layer layer)
     {
         layers.remove(layer);
         idle_redraw();
     }
 
+/**
+ * Adds the redraw function to Gtks list of things to do.
+ */
     public void idle_redraw()
     {
         if(redraw_flag)
@@ -273,11 +302,18 @@ public class Map: DrawingArea
         }
     }
 
+/**
+ * Returns the default tile cache directory as a string.
+ */
     public string get_default_cache_dir()
     {
         return GLib.Path.build_filename(GLib.Environment.get_user_cache_dir(), "mapnip", map_source.to_string());
     }
 
+/**
+ * Forces mapness to download all of the tiles in a given range from the current
+ * map source.
+ */
     public void download_maps(Point pt1, Point pt2, int zoom_start, int zoom_end)
     {
         zoom_end = zoom_end.clamp(zoom_min, zoom_max);
@@ -321,11 +357,9 @@ public class Map: DrawingArea
         }
     }
 
-    public void set_map_source(Source s)
-    {
-        repo_uri = s.get_uri();
-    }
-
+/**
+ * Sets the center point of the map.
+ */
     public void set_center(Point pt)
     {
         Gtk.Allocation allocation;
@@ -342,6 +376,9 @@ public class Map: DrawingArea
         idle_redraw();
     }
 
+/**
+ * Sets the zoom level. This should be between 2 - 17 (or so).
+ */
     public void set_zoom(int zoom)
     {
         Gtk.Allocation allocation;
@@ -351,7 +388,6 @@ public class Map: DrawingArea
         int height_center = allocation.height / 2;
 
         map_zoom = zoom.clamp(zoom_min, zoom_max);
-        //print(zoom.to_string() + " " + zoom_min.to_string() + " " + zoom_max.to_string() + "\n");
 
         map_x = lon2pixel(map_zoom, center_rlon) - width_center;
         map_y = lat2pixel(map_zoom, center_rlat) - height_center;
@@ -359,10 +395,59 @@ public class Map: DrawingArea
         idle_redraw();
     }
 
+/**
+ * Sets the map center AND the zoom level.
+ */
     public void set_center_and_zoom(Point pt, int zoom)
     {
         set_zoom(zoom);
         set_center(pt);
+    }
+
+/**
+ * This is the directory where tiles are stored and loaded from.
+ * cache_dir initialises to the value returned by 'get_default_cache_dir()'
+ * but it can be changed.
+ */
+    public string cache_dir { get; set; }
+
+/**
+ * If true, the scroll wheel on the mouse can be used to change the zoom level.
+ */
+    public bool scroll_wheel { get; set; }
+
+/**
+ * If true, the zoom controls will be displayed on the map.
+ */
+    public bool show_zoom_control { get; set; }
+
+
+
+
+/******************************************************************************
+*******************************************************************************
+________  ________  ___  ___      ___ ________  _________  _______
+|\   __  \|\   __  \|\  \|\  \    /  /|\   __  \|\___   ___\\  ___ \
+\ \  \|\  \ \  \|\  \ \  \ \  \  /  / | \  \|\  \|___ \  \_\ \   __/|
+\ \   ____\ \   _  _\ \  \ \  \/  / / \ \   __  \   \ \  \ \ \  \_|/__
+ \ \  \___|\ \  \\  \\ \  \ \    / /   \ \  \ \  \   \ \  \ \ \  \_|\ \
+  \ \__\    \ \__\\ _\\ \__\ \__/ /     \ \__\ \__\   \ \__\ \ \_______\
+   \|__|     \|__|\|__|\|__|\|__|/       \|__|\|__|    \|__|  \|_______|
+
+*******************************************************************************
+******************************************************************************/
+
+
+    private bool redraw_canvas ()
+    {
+        var window = get_window ();
+        if (null == window)
+            return false;
+
+        var region = window.get_clip_region ();
+        window.invalidate_region (region, true);
+        window.process_updates (true);
+        return false;
     }
 
     private bool check_track_click(Gdk.EventButton e, Track track, bool is_poly)
@@ -394,7 +479,8 @@ public class Map: DrawingArea
                     int ptx = (last_x+cx)/2;
                     int pty = (last_y+cy)/2;
                     dist_sqrd = (e.x - ptx) * (e.x-ptx) + (e.y-pty) * (e.y-pty);
-                    if(dist_sqrd <= ((DOT_RADIUS + 1) * (DOT_RADIUS + 1)))
+                    if((dist_sqrd <= ((DOT_RADIUS + 1) * (DOT_RADIUS + 1)))
+                            && (track.breakable == true))
                     {
                         is_button_down = false;
                         Point newpoint;
@@ -962,10 +1048,6 @@ public class Map: DrawingArea
         center_rlon = pixel2lon(map_zoom, pixel_x);
         center_rlat = pixel2lat(map_zoom, pixel_y);
     }
-
-    public string cache_dir { get; set; }
-    public bool scroll_wheel { get; set; }
-    public bool show_zoom_control { get; set; }
 
     private Source map_source;
 

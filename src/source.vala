@@ -3,78 +3,93 @@
 
     This file is part of mapness.
 
-    Foobar is free software: you can redistribute it and/or modify
+    mapness is free software: you can redistribute it and/or modify
     it under the terms of the Lesser GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    mapness is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     Lesser GNU General Public License for more details.
 
     You should have received a copy of the Lesser GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with mapness.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 namespace mapness
 {
 
+/**
+ * mapness can download tiles from a variety of sources.
+ */
+
 public enum Source
 {
-    OpenStreetMap,
-    GoogleStreet,
-    GoogleSatellite,
-    GoogleHybrid,
-    VirtualEarthStreet,
-    VirtualEarthSatellite,
-    VirtualEarthHybrid;
+    OPENSTREETMAP,
+    GOOGLESTREET,
+    GOOGLESATELLITE,
+    GOOGLEHYBRID,
+    VIRTUALEARTHSTREET,
+    VIRTUALEARTHSATELLITE,
+    VIRTUALEARTHHYBRID;
 
+    /**
+     * Returns a nice, readable name for the map source.
+     */
     public string to_string()
     {
         switch(this) {
-            case OpenStreetMap:
+            case OPENSTREETMAP:
                 return "Open Street Map";
-            case GoogleStreet:
+            case GOOGLESTREET:
                 return "Google Street";
-            case GoogleSatellite:
+            case GOOGLESATELLITE:
                 return "Google Satellite";
-            case GoogleHybrid:
+            case GOOGLEHYBRID:
                 return "Google Hybrid";
-            case VirtualEarthStreet:
+            case VIRTUALEARTHSTREET:
                 return "Virtual Earth Street";
-            case VirtualEarthSatellite:
+            case VIRTUALEARTHSATELLITE:
                 return "Virtual Earth Satellite";
-            case VirtualEarthHybrid:
+            case VIRTUALEARTHHYBRID:
                 return "Virtual Earth Hybrid";
         }
         return "";
     }
 
+    /**
+     * Returns the base URI of the map source.
+     * Mapness uses this value to determine the actual URI for each tile.
+     */
     public string get_uri()
     {
         switch(this) {
-            case OpenStreetMap:
-                return "http://tile.openstreetmap.org/#Z/#X/#Y.png";
-            case GoogleStreet:
+            case OPENSTREETMAP:
+                return "http://tile.OPENSTREETMAP.org/#Z/#X/#Y.png";
+            case GOOGLESTREET:
                 return "http://mt#R.google.com/vt/lyrs=m&hl=en&x=#X&s=&y=#Y&z=#Z";
-            case GoogleSatellite:
+            case GOOGLESATELLITE:
                 return "http://mt#R.google.com/vt/lyrs=s&hl=en&x=#X&s=&y=#Y&z=#Z";
-            case GoogleHybrid:
+            case GOOGLEHYBRID:
                 return "http://mt#R.google.com/vt/lyrs=y&hl=en&x=#X&s=&y=#Y&z=#Z";
-            case VirtualEarthStreet:
+            case VIRTUALEARTHSTREET:
                 return "http://a#R.ortho.tiles.virtualearth.net/tiles/r#W.jpeg?g=50";
-            case VirtualEarthSatellite:
+            case VIRTUALEARTHSATELLITE:
                 return "http://a#R.ortho.tiles.virtualearth.net/tiles/a#W.jpeg?g=50";
-            case VirtualEarthHybrid:
+            case VIRTUALEARTHHYBRID:
                 return "http://a#R.ortho.tiles.virtualearth.net/tiles/h#W.jpeg?g=50";
         }
         return "";
     }
 
+    /**
+     * Returns the image format of the tiles from this map source.
+     * This is probably 'png' or 'jpg'
+     */
     public string get_format()
     {
-        if(this == OpenStreetMap)
+        if(this == OPENSTREETMAP)
             return "png";
         return "jpg";
     }

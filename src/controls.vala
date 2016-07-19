@@ -1,27 +1,40 @@
 /*
     Copyright (C) 2016 Samuel Cowen <samuel.cowen@camelsoftware.com>
-    
+
     This file is part of mapness.
 
-    Foobar is free software: you can redistribute it and/or modify
+    mapness is free software: you can redistribute it and/or modify
     it under the terms of the Lesser GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    mapness is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     Lesser GNU General Public License for more details.
 
     You should have received a copy of the Lesser GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with mapness.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 namespace mapness
 {
 
-public class ZoomControl: Layer
+private class ZoomControl: Layer
 {
+    /**************************************************************************
+    ***************************************************************************
+    ________  ___  ___  ________  ___       ___  ________
+    |\   __  \|\  \|\  \|\   __  \|\  \     |\  \|\   ____\
+    \ \  \|\  \ \  \\\  \ \  \|\ /\ \  \    \ \  \ \  \___|
+    \ \   ____\ \  \\\  \ \   __  \ \  \    \ \  \ \  \
+     \ \  \___|\ \  \\\  \ \  \|\  \ \  \____\ \  \ \  \____
+      \ \__\    \ \_______\ \_______\ \_______\ \__\ \_______\
+       \|__|     \|_______|\|_______|\|_______|\|__|\|_______|
+
+    ***************************************************************************
+    **************************************************************************/
+
     public ZoomControl()
     {
         shade_mul = 0.2;
@@ -117,7 +130,25 @@ public class ZoomControl: Layer
         return false;
     }
 
-    private void rounded_box(Cairo.Context cr, double x, double y, double width, double height, double radius)
+    public signal void zoom_changed(int change);
+    public signal void redraw();
+
+
+    /**************************************************************************
+    ***************************************************************************
+    ________  ________  ___  ___      ___ ________  _________  _______
+    |\   __  \|\   __  \|\  \|\  \    /  /|\   __  \|\___   ___\\  ___ \
+    \ \  \|\  \ \  \|\  \ \  \ \  \  /  / | \  \|\  \|___ \  \_\ \   __/|
+    \ \   ____\ \   _  _\ \  \ \  \/  / / \ \   __  \   \ \  \ \ \  \_|/__
+     \ \  \___|\ \  \\  \\ \  \ \    / /   \ \  \ \  \   \ \  \ \ \  \_|\ \
+      \ \__\    \ \__\\ _\\ \__\ \__/ /     \ \__\ \__\   \ \__\ \ \_______\
+       \|__|     \|__|\|__|\|__|\|__|/       \|__|\|__|    \|__|  \|_______|
+
+    ***************************************************************************
+    **************************************************************************/
+
+    private void rounded_box(Cairo.Context cr, double x, double y,
+        double width, double height, double radius)
     {
         double degrees = Math.PI / 180.0;
 
@@ -129,9 +160,6 @@ public class ZoomControl: Layer
         cr.close_path();
         cr.fill();
     }
-
-    public signal void zoom_changed(int change);
-    public signal void redraw();
 
     private int last_width;
     private int last_height;

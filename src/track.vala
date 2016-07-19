@@ -3,18 +3,18 @@
 
     This file is part of mapness.
 
-    Foobar is free software: you can redistribute it and/or modify
+    mapness is free software: you can redistribute it and/or modify
     it under the terms of the Lesser GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    mapness is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     Lesser GNU General Public License for more details.
 
     You should have received a copy of the Lesser GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with mapness.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 using Gtk;
@@ -22,8 +22,29 @@ using Gtk;
 namespace mapness
 {
 
+/**
+ * A track represents a pathway, or a series of points across the map.
+ * Tracks can be drawn in different colours and with different line widths.
+ * They can be 'editable', so users can click to insert or change points.
+ * There are signals for the points on the track being addded, inserted, changed
+ * and removed.
+ */
+
 public class Track: Object
 {
+    /**************************************************************************
+    ***************************************************************************
+    ________  ___  ___  ________  ___       ___  ________
+    |\   __  \|\  \|\  \|\   __  \|\  \     |\  \|\   ____\
+    \ \  \|\  \ \  \\\  \ \  \|\ /\ \  \    \ \  \ \  \___|
+    \ \   ____\ \  \\\  \ \   __  \ \  \    \ \  \ \  \
+     \ \  \___|\ \  \\\  \ \  \|\  \ \  \____\ \  \ \  \____
+      \ \__\    \ \_______\ \_______\ \_______\ \__\ \_______\
+       \|__|     \|_______|\|_______|\|_______|\|__|\|_______|
+
+    ***************************************************************************
+    **************************************************************************/
+
     public Track()
     {
         points = new GLib.SList<Point>();
@@ -31,14 +52,25 @@ public class Track: Object
         color.alpha = 1.0;
         editable = false;
         line_width = 2;
+        breakable = true;
     }
 
+    /**
+     * Adds a point to the end of the track.
+     * Emits a 'point_added' signal.
+     */
     public void add_point(Point p)
     {
         points.append(p);
         point_added();
     }
 
+    /**
+     * Removes a point from a given position along the track.
+     * ie. remove_point(3) would remove the third point from
+     * the start of the track.
+     * Emits a 'point_removed' signal.
+     */
     public void remove_point(uint pos)
     {
         var p = points.nth_data(pos);
@@ -46,22 +78,35 @@ public class Track: Object
         point_removed(pos);
     }
 
+    /**
+     * Returns the number of points in the track.
+     */
     public uint n_points()
     {
         return points.length();
     }
 
+    /**
+     * Inserts a point into the track as position 'pos'.
+     * Emits a 'point_inserted' signal.
+     */
     public void insert_point(Point p, int pos)
     {
         points.insert(p, pos);
         point_inserted();
     }
 
+    /**
+     * Gets a point from a position.
+     */
     public Point get_point(uint pos)
     {
         return points.nth_data(pos);
     }
 
+    /**
+     * Returns the length of the track in meters.
+     */
     public double get_length()
     {
         double ret = 0;
@@ -90,6 +135,9 @@ public class Track: Object
         return ret;
     }
 
+    /**
+     * Sets the colour and alpha (transparency) of the track.
+     */
     public void set_rgba(double r, double g, double b, double a)
     {
         color.red = r;
@@ -98,17 +146,60 @@ public class Track: Object
         color.alpha = a;
     }
 
+    /**
+     * The point added signal is emited whenever a point is appended to the
+     * end of the track.
+     */
     public signal void point_added();
+
+    /**
+     * The point inserted signal is emited whenever a point is inserted into
+     * the track.
+     */
     public signal void point_inserted();
+
+    /**
+     * The point removed signal is emited whenever a point is removed from the
+     * track.
+     */
     public signal void point_removed(uint pos);
+
+    /**
+     * The point changed signal is emited whenever a point is changed by the
+     * user. Only editable tracks will emit this signal - because users can only
+     * change editable tracks.
+     */
     public signal void point_changed(Point pt);
 
-    public GLib.SList<Point> points;
+    /**
+     * This is the list of points.
+     * Changing this directly will not emit any signals.
+     */
+    public unowned GLib.SList<Point> points { get; set; }
+
+    /**
+     * The Gdk.RGBA colour of the track.
+     */
     public Gdk.RGBA color { get; set; }
 
+    /**
+     * If true, the user will be able to insert points and move them around
+     * using the mouse.
+     */
     public bool editable { get; set; }
 
+    /**
+     * The width of the track. Default is 2.
+     */
     public uint line_width { get; set; }
+
+    /**
+     * If breakable is set to false, users will not be able to insert points
+     * into an editable track.
+     * Default value is true.
+     */
+    public bool breakable { get; set; }
+
 }
 
 }
