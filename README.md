@@ -17,3 +17,11 @@ in the Vala programming language. The benefits of Vala are
 
 <p>Please see https://github.com/nzjrs/osm-gps-map
 for the list of OsmGpsMap authors.
+
+<p>It's easy to generate bindings of Mapness for other languages.
+<p>To build C sources, use 'make c'.
+<p>To build a typelib file to Javascript and Python, use 'make typelib'
+<p>Other language bindings shouldn't be too difficult, but documentation on
+using gobject introspection seems a little hard to come by!
+<p>To install everything, please check the INCDIR, LIBDIR, VAPIDIR and
+TYPELIBDIR variables are correct in the makefile. If they are OK, use make install.
