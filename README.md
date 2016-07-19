@@ -3,7 +3,7 @@
 <p>Mapness is a Gtk+ map widget with a focus on being roughly equivalent to
 Google Maps.
 
-<p>Mapness can source maps from OsmGpsMap, Google Maps and Virtual Earth.
+<p>Mapness can source maps from Open street maps, Google Maps and Virtual Earth.
 <br>
 
 Mapness has been inspired by the OsmGpsMap, but unlike OsmGpsMap it is written
