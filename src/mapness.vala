@@ -796,18 +796,22 @@ ________  ________  ___  ___      ___ ________  _________  _______
 
     private void draw_track(Cairo.Context cr, Track track, bool is_poly)
     {
-        cr.set_source_rgba(track.color.red, track.color.green, track.color.blue, track.color.alpha);
+        cr.set_source_rgba(track.color.red, track.color.green,
+                track.color.blue, track.color.alpha);
+
         cr.set_line_width(track.line_width);
         int last_x = 0;
         int last_y = 0;
         int first_x = 0;
         int first_y = 0;
         int count = 0;
+
         foreach(var point in track.points)
         {
             int x = 0;
             int y = 0;
             geographic_to_screen(point, out x, out y);
+
             if(count == 0)
             {
                 cr.move_to(x, y);
@@ -850,9 +854,11 @@ ________  ________  ___  ___      ___ ________  _________  _______
     {
         cr.set_line_cap(Cairo.LineCap.ROUND);
         cr.set_line_join (Cairo.LineJoin.ROUND);
+        int count = 0;
         foreach(var track in tracks)
         {
             draw_track(cr, track, false);
+            count++;
         }
     }
 

@@ -48,8 +48,8 @@ public class Track: Object
     public Track()
     {
         points = new GLib.SList<Point>();
-        color = Gdk.RGBA();
-        color.alpha = 1.0;
+        color = new Gdk.RGBA();
+        color.parse("rgba(255, 0, 0, 0.9)");
         editable = false;
         line_width = 2;
         breakable = true;
@@ -137,13 +137,26 @@ public class Track: Object
 
     /**
      * Sets the colour and alpha (transparency) of the track.
+     * All values should be between 0 and 1.0. Zero is black/transparent.
+     * 1.0 is white/not transparent.
      */
-    public void set_rgba(double r, double g, double b, double a)
+    public void set_color(double r, double g, double b, double a)
     {
         color.red = r;
         color.blue = b;
         color.green = g;
         color.alpha = a;
+    }
+
+    /**
+     * Gets the RGBA values for the track color.
+     */
+    public void get_color(out double r, out double g, out double b, out double a)
+    {
+        r = color.red;
+        g = color.green;
+        b = color.blue;
+        a = color.alpha;
     }
 
     /**
@@ -180,7 +193,7 @@ public class Track: Object
     /**
      * The Gdk.RGBA colour of the track.
      */
-    public Gdk.RGBA color { get; set; }
+    public Gdk.RGBA color;
 
     /**
      * If true, the user will be able to insert points and move them around

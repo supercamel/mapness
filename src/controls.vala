@@ -48,6 +48,7 @@ private class ZoomControl: Layer
         int ctrl_height = 80;
 
         cr.set_source_rgba(shade_mul, shade_mul, shade_mul, 1.0);
+        cr.set_line_width(2.0);
         rounded_box(cr, x_pos, y_pos, ctrl_width, ctrl_height, 3);
 
         var pattern = new Cairo.Pattern.linear(x_pos, y_pos, x_pos+80, y_pos+100);

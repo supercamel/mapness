@@ -15,6 +15,7 @@ all:
 
 clean:
 	rm -f *.gir *.typelib *.so *.vapi *.tmp *.h
+	rm src/*.c
 	rm -rfd docs
 
 install:
