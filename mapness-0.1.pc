@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: mapness
+Description: a gtk-based map widget
+Version: 0.1
+Requires: gtk+-3.0 libsoup-2.4
+Requires.private: gtk+-3.0 libsoup-2.4
+Libs: -L${libdir} -lmapness-0.1
+Cflags: -I${includedir}/

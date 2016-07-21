@@ -93,7 +93,7 @@ public class Track: Object
     public void insert_point(Point p, int pos)
     {
         points.insert(p, pos);
-        point_inserted();
+        point_inserted(pos);
     }
 
     /**
@@ -169,7 +169,7 @@ public class Track: Object
      * The point inserted signal is emited whenever a point is inserted into
      * the track.
      */
-    public signal void point_inserted();
+    public signal void point_inserted(int n);
 
     /**
      * The point removed signal is emited whenever a point is removed from the
