@@ -7,11 +7,11 @@ CC=valac
 VERSION=0.1
 LIBRARY=mapness
 
-CFLAGS= --library=$(LIBRARY) -H $(LIBRARY).h --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg glib-2.0 --gir=$(LIBRARY)-$(VERSION).gir
+CFLAGS= --library=$(LIBRARY)-$(VERSION) -H $(LIBRARY).h --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg glib-2.0 --gir=$(LIBRARY)-$(VERSION).gir
 SOURCES=$(wildcard src/*.vala)
 
 all:
-	$(CC) $(CFLAGS) $(SOURCES) -X -fPIC -X -shared -o lib$(LIBRARY).so
+	$(CC) $(CFLAGS) $(SOURCES) -X -fPIC -X -shared -o lib$(LIBRARY)-$(VERSION).so
 
 clean:
 	rm -f *.gir *.typelib *.so *.vapi *.tmp *.h
@@ -19,9 +19,9 @@ clean:
 	rm -rfd docs
 
 install:
-	sudo cp lib$(LIBRARY).so $(LIBDIR)
+	sudo cp lib$(LIBRARY)-$(VERSION).so $(LIBDIR)
 	sudo cp $(LIBRARY).h $(INCDIR)
-	sudo cp $(LIBRARY).vapi $(VAPIDIR)
+	sudo cp $(LIBRARY)-$(VERSION).vapi $(VAPIDIR)
 	sudo cp $(LIBRARY)-$(VERSION).typelib $(TYPELIBDIR)
 
 c:

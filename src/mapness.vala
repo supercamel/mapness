@@ -405,6 +405,27 @@ ________  ___  ___  ________  ___       ___  ________
     }
 
 /**
+ * Gets coordinates for the top left and lower right points of the screen.
+ */
+    public void get_bounds(out Point top_left, out Point lower_right)
+    {
+        Gtk.Allocation allocation;
+        get_allocation(out allocation);
+
+        screen_to_geographic(0, 0, out top_left);
+        screen_to_geographic(allocation.width, allocation.height,
+                                                    out lower_right);
+    }
+
+/**
+ * Returns the position at the center of the map.
+ */
+    public Point get_center()
+    {
+        return new Point.radians(center_rlat, center_rlon);
+    }
+
+/**
  * This is the directory where tiles are stored and loaded from.
  * cache_dir initialises to the value returned by 'get_default_cache_dir()'
  * but it can be changed.
@@ -504,7 +525,8 @@ ________  ________  ___  ___      ___ ________  _________  _______
             {
                 int ptx = (last_x+first_x)/2;
                 int pty = (last_y+first_y)/2;
-                double dist_sqrd = (e.x - ptx) * (e.x-ptx) + (e.y-pty) * (e.y-pty);
+                double dist_sqrd = (e.x - ptx) * (e.x-ptx) +
+                                                        (e.y-pty) * (e.y-pty);
                 if(dist_sqrd <= ((DOT_RADIUS + 1) * (DOT_RADIUS + 1)))
                 {
                     is_button_down = false;
