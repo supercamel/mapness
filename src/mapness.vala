@@ -90,13 +90,13 @@ ________  ___  ___  ________  ___       ___  ________
             if(show_zoom_control == true)
             {
                 if(zoom_control.on_click(e) == true)
-                    return false;
+                    return true;
             }
 
             foreach(var layer in layers)
             {
                 if(layer.on_click(e) == true)
-                    return false;
+                    return true;
             }
             if((int)e.button == 1)
             {
@@ -222,6 +222,7 @@ ________  ___  ___  ________  ___       ___  ________
     public void add_image(Image img)
     {
         images.append(img);
+        img.notify.connect(idle_redraw);
         idle_redraw();
     }
 
@@ -240,6 +241,7 @@ ________  ___  ___  ________  ___       ___  ________
     public void add_track(Track track)
     {
         tracks.append(track);
+        track.notify.connect(idle_redraw);
         idle_redraw();
     }
 
@@ -258,6 +260,7 @@ ________  ___  ___  ________  ___       ___  ________
     public void add_polygon(Polygon poly)
     {
         polygons.append(poly);
+        poly.notify.connect(idle_redraw);
         idle_redraw();
     }
 
@@ -424,6 +427,33 @@ ________  ___  ___  ________  ___       ___  ________
     {
         return new Point.radians(center_rlat, center_rlon);
     }
+
+/**
+ * Returns the zoom level of the map.
+ */
+    public int get_zoom()
+    {
+        return map_zoom;
+    }
+
+/**
+ * Converts x,y pixels into a Point.
+ */
+    public void screen_to_geographic(int x, int y, out Point point)
+    {
+        point = new Point.radians(pixel2lat(map_zoom, map_y + y),
+                                pixel2lon(map_zoom, map_x + x));
+    }
+
+/**
+ * Converts a Point into x,y pixel position.
+ */
+    public void geographic_to_screen(Point pt, out int x, out int y)
+    {
+        x = lon2pixel(map_zoom, pt.rlon) - map_x + drag_mouse_dx;
+        y = lat2pixel(map_zoom, pt.rlat) - map_y + drag_mouse_dy;
+    }
+
 
 /**
  * This is the directory where tiles are stored and loaded from.
@@ -937,13 +967,23 @@ ________  ________  ___  ___      ___ ________  _________  _______
         }
     }
 
-    public override bool draw(Cairo.Context cr)
+    private void draw_layers(Cairo.Context cr)
+    {
+        Gtk.Allocation allocation;
+        get_allocation(out allocation);
+
+        foreach(var layer in layers)
+            layer.draw(cr, allocation.width, allocation.height);
+    }
+
+    protected override bool draw(Cairo.Context cr)
     {
         redraw_cycles++;
         draw_tiles(cr);
         draw_images(cr);
         draw_polygons(cr);
         draw_tracks(cr);
+        draw_layers(cr);
 
         Gtk.Allocation allocation;
         get_allocation(out allocation);
@@ -987,18 +1027,6 @@ ________  ________  ___  ___      ___ ________  _________  _______
         if (pos < 0)
             return text;
         return text.substring(0, pos) + replace + text.substring(pos + search.length);
-    }
-
-    private void screen_to_geographic(int x, int y, out Point point)
-    {
-        point = new Point.radians(pixel2lat(map_zoom, map_y + y),
-                                pixel2lon(map_zoom, map_x + x));
-    }
-
-    private void geographic_to_screen(Point pt, out int x, out int y)
-    {
-        x = lon2pixel(map_zoom, pt.rlon) - map_x + drag_mouse_dx;
-        y = lat2pixel(map_zoom, pt.rlat) - map_y + drag_mouse_dy;
     }
 
     private int lat2pixel(int zoom, double lat)

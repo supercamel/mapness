@@ -24,38 +24,29 @@ namespace mapness
  * Layers are used to draw your own stuff over the top of the map.
  * This is a base class.
  * To implement your own layer, you should create a class that inherits Layer
- * and overrides at least the draw function.
+ * and implements all these functions.
  * Look at 'controls.vala' for an example - the zoom control is just a layer.
  */
 
-public class Layer: Object
+public interface Layer: Object
 {
     /**
      * Override this function to draw onto the Cairo.Context.
      * width and height are the dimensions of the actual map widget.
      */
-    public virtual void draw(Cairo.Context cr, int width, int height)
-    {
-
-    }
+    public abstract void draw(Cairo.Context cr, int width, int height);
 
     /**
      * Override this to receive click events (mouse down).
      * Return true to prevent subsequent layers from receiving click events.
      */
-    public virtual bool on_click(Gdk.EventButton e)
-    {
-        return false;
-    }
+    public abstract bool on_click(Gdk.EventButton e);
 
     /**
      * Override this to receive mouse motion events.
      * Return true to prevent subsequent layers from receiving these events.
      */
-    public virtual bool on_motion(Gdk.EventMotion e)
-    {
-        return false;
-    }
+    public abstract bool on_motion(Gdk.EventMotion e);
 
 }
 

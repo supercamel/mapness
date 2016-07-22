@@ -169,7 +169,7 @@ public class Track: Object
      * The point inserted signal is emited whenever a point is inserted into
      * the track.
      */
-    public signal void point_inserted(int n);
+    public signal void point_inserted(uint n);
 
     /**
      * The point removed signal is emited whenever a point is removed from the

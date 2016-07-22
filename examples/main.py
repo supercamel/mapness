@@ -15,7 +15,7 @@ map = mapness.Map.new()
 map.set_source(mapness.Source.OPENSTREETMAP)
 
 melb = mapness.Point.degrees(-37.8136, 144.9631)
-map.add_image(mapness.Image.from_file("test.png", melb))
+map.add_image(mapness.Image.from_file("../test.png", melb))
 win.add(map)
 win.show_all()
 map.set_center_and_zoom(melb, 8)

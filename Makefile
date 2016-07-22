@@ -28,7 +28,7 @@ c:
 	$(CC) -C $(CFLAGS) $(SOURCES)
 
 typelib:
-	g-ir-compiler --shared-library=lib$(LIBRARY).so --output=$(LIBRARY)-$(VERSION).typelib $(LIBRARY)-$(VERSION).gir
+	g-ir-compiler --shared-library=lib$(LIBRARY)-$(VERSION).so --output=$(LIBRARY)-$(VERSION).typelib $(LIBRARY)-$(VERSION).gir
 
 docs:
 	valadoc -o docs --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg glib-2.0 --package-name $(LIBRARY) $(SOURCES)

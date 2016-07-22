@@ -20,7 +20,7 @@
 namespace mapness
 {
 
-private class ZoomControl: Layer
+private class ZoomControl: Object, Layer
 {
     /**************************************************************************
     ***************************************************************************
@@ -40,7 +40,7 @@ private class ZoomControl: Layer
         shade_mul = 0.2;
     }
 
-    public override void draw(Cairo.Context cr, int width, int height)
+    public void draw(Cairo.Context cr, int width, int height)
     {
         int x_pos = width-70;
         int y_pos = height-100;
@@ -81,7 +81,7 @@ private class ZoomControl: Layer
         last_height = height;
     }
 
-    public override bool on_click(Gdk.EventButton e)
+    public bool on_click(Gdk.EventButton e)
     {
         int x_pos = last_width-70;
         int y_pos = last_height-100;
@@ -109,7 +109,7 @@ private class ZoomControl: Layer
         return false;
     }
 
-    public override bool on_motion(Gdk.EventMotion e)
+    public bool on_motion(Gdk.EventMotion e)
     {
         int x_pos = last_width-70;
         int y_pos = last_height-100;
