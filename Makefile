@@ -7,7 +7,7 @@ CC=valac
 VERSION=0.1
 LIBRARY=mapness
 
-CFLAGS= --library=$(LIBRARY)-$(VERSION) -H $(LIBRARY).h --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg glib-2.0 --gir=$(LIBRARY)-$(VERSION).gir
+CFLAGS= --library=$(LIBRARY)-$(VERSION) -H $(LIBRARY).h --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg glib-2.0 --gir=$(LIBRARY)-$(VERSION).gir -g --save-temps
 SOURCES=$(wildcard src/*.vala)
 
 all:

@@ -6,20 +6,23 @@ gi.require_version('mapness', '0.1')
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import mapness
+import cairo
 
 
 class MyLayer(GObject.GObject, mapness.Layer):
     def __init__(self):
         GObject.GObject.__init__(self)
 
-    def draw(self, cr, width, height):
-        print("Drawing")
+    def do_draw(self, cr, width, height):
+        cr.set_source_rgba(0.0, 0.5, 0.5, 0.4)
+        cr.rectangle(100, 100, width-200, height-200)
+        cr.fill()
 
-    def on_motion(self, e):
+    def do_on_motion(self, e):
         print("Motion notify")
         return False
 
-    def on_click(self, e):
+    def do_on_click(self, e):
         print("on click")
         return False
 
