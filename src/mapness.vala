@@ -1045,7 +1045,6 @@ ________  ________  ___  ___      ___ ________  _________  _______
         {
         	var s = convert_coords_to_quadtree_string(x,y,zoom,'\0', "0123");
 			url = replace_first(url, URI_MARKER_Q0, s);
-			print(url + "\n");
         }
         if(uri_format.has_r)
             url = replace_first(url, URI_MARKER_R, GLib.Random.int_range(0, 4).to_string());
