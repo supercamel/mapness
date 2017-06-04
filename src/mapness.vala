@@ -600,6 +600,8 @@ ________  ________  ___  ___      ___ ________  _________  _______
 
         dl.map = this;
         dl.redraw = redraw;
+        
+        print(dl.uri + "\n");
 
         var msg = new Soup.Message("GET", dl.uri);
         if(msg != null)
@@ -678,6 +680,7 @@ ________  ________  ___  ___      ___ ________  _________  _______
                         if(dl.ttl > 0)
                         {
                             session.requeue_message(msg);
+                            print(msg.status_code.to_string() + "\n");
                             return;
                         }
                         else
@@ -1002,6 +1005,28 @@ ________  ________  ___  ___      ___ ________  _________  _______
         cr.fill();
         cr.restore();
     }
+    
+    private string convert_coords_to_quadtree_string(int x, int y, 
+    			int zoomlevel, char initial, string quadrant)
+	{
+		var builder = new StringBuilder ();
+		var quad = quadrant.to_utf8();
+		int n;
+
+		if (initial != '\0')
+		{
+			builder.append_unichar(initial);
+		}
+
+		for(n = zoomlevel-1; n >= 0; n--)
+		{
+		    int xbit = (x >> n) & 1;
+		    int ybit = (y >> n) & 1;
+		    builder.append_unichar(quad[xbit + 2 * ybit]);
+		}
+		
+		return builder.str;
+	}
 
     private string replace_map_uri(string uri, int zoom, int x, int y)
     {
@@ -1016,6 +1041,12 @@ ________  ________  ___  ___      ___ ________  _________  _______
             url = replace_first(url, URI_MARKER_S, (zoom_max-zoom).to_string());
         ///TODO quad tree isn't needed for our map sources, but for 100% OsmGpsMap
         //compatibility it should be included one day
+        if(uri_format.has_q0)
+        {
+        	var s = convert_coords_to_quadtree_string(x,y,zoom,'\0', "0123");
+			url = replace_first(url, URI_MARKER_Q0, s);
+			print(url + "\n");
+        }
         if(uri_format.has_r)
             url = replace_first(url, URI_MARKER_R, GLib.Random.int_range(0, 4).to_string());
         return url;

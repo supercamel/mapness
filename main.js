@@ -32,7 +32,7 @@ const MapnessTest= new Lang.Class ({
             window_position: Gtk.WindowPosition.CENTER });
 
         this.map = mapness.Map.new();
-        this.map.set_source(mapness.Source.OPENSTREETMAP);
+        this.map.set_source(mapness.Source.VIRTUALEARTHSATELLITE);
 
         var melb = mapness.Point.degrees(-37.8136, 144.9631);
         this.map.add_image(mapness.Image.from_file("test.png",
