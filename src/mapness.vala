@@ -600,8 +600,6 @@ ________  ________  ___  ___      ___ ________  _________  _______
 
         dl.map = this;
         dl.redraw = redraw;
-        
-        print(dl.uri + "\n");
 
         var msg = new Soup.Message("GET", dl.uri);
         if(msg != null)
