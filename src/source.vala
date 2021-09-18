@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016 Samuel Cowen <samuel.cowen@camelsoftware.com>
+    Copyright (C) 2021 Samuel Cowen <samuel.cowen@camelsoftware.com>
 
     This file is part of mapness.
 
@@ -24,15 +24,13 @@ namespace mapness
  * mapness can download tiles from a variety of sources.
  */
 
-public enum Source
+public enum MapSource
 {
     OPENSTREETMAP,
     GOOGLESTREET,
     GOOGLESATELLITE,
     GOOGLEHYBRID,
-    VIRTUALEARTHSTREET,
-    VIRTUALEARTHSATELLITE,
-    VIRTUALEARTHHYBRID;
+    OSM_CUSTOM;
 
     /**
      * Returns a nice, readable name for the map source.
@@ -48,14 +46,22 @@ public enum Source
                 return "Google Satellite";
             case GOOGLEHYBRID:
                 return "Google Hybrid";
-            case VIRTUALEARTHSTREET:
-                return "Virtual Earth Street";
-            case VIRTUALEARTHSATELLITE:
-                return "Virtual Earth Satellite";
-            case VIRTUALEARTHHYBRID:
-                return "Virtual Earth Hybrid";
+            case OSM_CUSTOM:
+                return "OSM Custom";
         }
         return "";
+    }
+}
+
+public class Source
+{
+    public MapSource map_source;
+
+    public string custom_uri;
+
+    public string to_string()
+    {
+        return map_source.to_string();
     }
 
     /**
@@ -64,21 +70,17 @@ public enum Source
      */
     public string get_uri()
     {
-        switch(this) {
-            case OPENSTREETMAP:
+        switch(map_source) {
+            case MapSource.OPENSTREETMAP:
                 return "http://tile.OPENSTREETMAP.org/#Z/#X/#Y.png";
-            case GOOGLESTREET:
+            case MapSource.GOOGLESTREET:
                 return "http://mt#R.google.com/vt/lyrs=m&hl=en&x=#X&s=&y=#Y&z=#Z";
-            case GOOGLESATELLITE:
+            case MapSource.GOOGLESATELLITE:
                 return "http://mt#R.google.com/vt/lyrs=s&hl=en&x=#X&s=&y=#Y&z=#Z";
-            case GOOGLEHYBRID:
+            case MapSource.GOOGLEHYBRID:
                 return "http://mt#R.google.com/vt/lyrs=y&hl=en&x=#X&s=&y=#Y&z=#Z";
-            case VIRTUALEARTHSTREET:
-                return "http://a#R.ortho.tiles.virtualearth.net/tiles/r#W.jpeg?g=50";
-            case VIRTUALEARTHSATELLITE:
-                return "http://a#R.ortho.tiles.virtualearth.net/tiles/a#W.jpeg?g=50";
-            case VIRTUALEARTHHYBRID:
-                return "http://a#R.ortho.tiles.virtualearth.net/tiles/h#W.jpeg?g=50";
+            case MapSource.OSM_CUSTOM:
+                return custom_uri + "/#Z/#X/#Y.png";
         }
         return "";
     }
@@ -89,7 +91,7 @@ public enum Source
      */
     public string get_format()
     {
-        if(this == OPENSTREETMAP)
+        if((map_source == MapSource.OPENSTREETMAP) || (map_source == MapSource.OSM_CUSTOM)) 
             return "png";
         return "jpg";
     }

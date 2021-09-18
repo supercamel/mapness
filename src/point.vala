@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016 Samuel Cowen <samuel.cowen@camelsoftware.com>
+    Copyright (C) 2021 Samuel Cowen <samuel.cowen@camelsoftware.com>
 
     This file is part of mapness.
 
@@ -17,11 +17,15 @@
     along with mapness.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Gee;
+
 namespace mapness
 {
 
 /**
  * Points are used to specify a location.
+ *
+ * Like tracks, they can have user-defined properties added to them
  */
 public class Point: Object
 {
@@ -39,11 +43,20 @@ public class Point: Object
     ***************************************************************************
     **************************************************************************/
 
+    public Point()
+    {
+        rlat = 0;
+        rlon = 0;
+        map = new HashMap<string, Value?>();
+    }
+
 /**
  * Creates a new point that is initialised to a lat/lon in degrees.
  */
     public Point.degrees(double lat, double lon)
     {
+        map = new HashMap<string, Value?>();
+
         rlat = lat * (Math.PI/180.0);
         rlon = lon * (Math.PI/180.0);
     }
@@ -53,6 +66,8 @@ public class Point: Object
  */
     public Point.radians(double lat, double lon)
     {
+        map = new HashMap<string, Value?>();
+
         rlat = lat;
         rlon = lon;
     }
@@ -100,6 +115,60 @@ public class Point: Object
  * Longitude in radians.
  */
     public double rlon { get; set; }
+
+/**
+ * Adds a generic key/value to the point
+ */
+    public void add_property(string name, Value? v) 
+    {
+        map.set(name, v);
+    }
+
+/**
+ * true if the point has a property of this name
+ */
+    public bool has_property(string name) 
+    {
+        return name in map;
+    }
+
+/**
+ * Gets a value by key
+ */
+    public Value? get_property(string name)
+    {
+        return map.get(name);
+    }
+
+/**
+ * Removes a property
+ */
+    public void remove_property(string name) 
+    {
+        if(name in map)
+        {
+            map.unset(name);
+        }
+    }
+
+
+
+/******************************************************************************
+*******************************************************************************
+________  ________  ___  ___      ___ ________  _________  _______
+|\   __  \|\   __  \|\  \|\  \    /  /|\   __  \|\___   ___\\  ___ \
+\ \  \|\  \ \  \|\  \ \  \ \  \  /  / | \  \|\  \|___ \  \_\ \   __/|
+\ \   ____\ \   _  _\ \  \ \  \/  / / \ \   __  \   \ \  \ \ \  \_|/__
+ \ \  \___|\ \  \\  \\ \  \ \    / /   \ \  \ \  \   \ \  \ \ \  \_|\ \
+  \ \__\    \ \__\\ _\\ \__\ \__/ /     \ \__\ \__\   \ \__\ \ \_______\
+   \|__|     \|__|\|__|\|__|\|__|/       \|__|\|__|    \|__|  \|_______|
+
+*******************************************************************************
+******************************************************************************/
+
+
+    private HashMap<string, Value?> map;
+
 
 }
 

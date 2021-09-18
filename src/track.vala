@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016 Samuel Cowen <samuel.cowen@camelsoftware.com>
+    Copyright (C) 2021 Samuel Cowen <samuel.cowen@camelsoftware.com>
 
     This file is part of mapness.
 
@@ -18,6 +18,7 @@
 */
 
 using Gtk;
+using Gee;
 
 namespace mapness
 {
@@ -28,6 +29,10 @@ namespace mapness
  * They can be 'editable', so users can click to insert or change points.
  * There are signals for the points on the track being addded, inserted, changed
  * and removed.
+ *
+ * Tracks can also store generic values called properties, not to be confused 
+ * with normal object properties. They are key-value pairs stored with the object.
+ * It's just to store extra data with your track.
  */
 
 public class Track: Object
@@ -49,6 +54,7 @@ public class Track: Object
     {
         points = new GLib.SList<Point>();
         color = new Gdk.RGBA();
+        map = new HashMap<string, Value?>();
         color.parse("rgba(255, 0, 0, 0.9)");
         editable = false;
         line_width = 2;
@@ -76,6 +82,41 @@ public class Track: Object
         var p = points.nth_data(pos);
         points.remove(p);
         point_removed(pos);
+    }
+
+/**
+ * Adds a generic key/value to the point
+ */
+    public void add_property(string name, Value? v) 
+    {
+        map.set(name, v);
+    }
+
+/**
+ * true if the point has a property of this name
+ */
+    public bool has_property(string name) 
+    {
+        return name in map;
+    }
+
+/**
+ * Gets a value by key
+ */
+    public Value? get_property(string name)
+    {
+        return map.get(name);
+    }
+
+/**
+ * Removes a property
+ */
+    public void remove_property(string name) 
+    {
+        if(name in map)
+        {
+            map.unset(name);
+        }
     }
 
     /**
@@ -212,6 +253,13 @@ public class Track: Object
      * Default value is true.
      */
     public bool breakable { get; set; }
+
+    /**
+     * A name for your track
+     */
+    public string name { get; set; }
+
+    private HashMap<string, Value?> map;
 
 }
 

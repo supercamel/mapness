@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016 Samuel Cowen <samuel.cowen@camelsoftware.com>
+    Copyright (C) 2021 Samuel Cowen <samuel.cowen@camelsoftware.com>
 
     After making several contributions to the OsmGpsMap, I decided to create a
     new mapping widget using the Vala language. The benefits of Vala are
@@ -52,7 +52,7 @@ ________  ___  ___  ________  ___       ___  ________
 
     public Map()
     {
-        map_source = Source.GOOGLEHYBRID;
+        map_source.map_source  = MapSource.GOOGLEHYBRID;
         repo_uri = map_source.get_uri();
         uri_format = get_uri_format(repo_uri);
         cache_dir = get_default_cache_dir();
@@ -255,6 +255,21 @@ ________  ___  ___  ________  ___       ___  ________
     }
 
 /**
+ * Remove track by name.
+ */
+    public void remove_track_by_name(string name)
+    {
+        foreach(var track in tracks)
+        {
+            if(track.name == name)
+            {
+                tracks.remove(track);
+            }
+        }
+        idle_redraw();
+    }
+
+/**
  * Adds a polygon to the map.
  */
     public void add_polygon(Polygon poly)
@@ -310,7 +325,7 @@ ________  ___  ___  ________  ___       ___  ________
  */
     public string get_default_cache_dir()
     {
-        return GLib.Path.build_filename(GLib.Environment.get_user_cache_dir(), "mapnip", map_source.to_string());
+        return GLib.Path.build_filename(GLib.Environment.get_user_cache_dir(), "mapness", map_source.to_string());
     }
 
 /**

@@ -30,6 +30,11 @@ class Ruler:
         self.track.set_editable(True)
         self.track.set_breakable(False)
 
+        self.track.add_property("test", 100.0)
+
+        print(self.track.get_property("test"))
+
+
         p1 = mapness.Point.degrees(-5.0, 0)
         p2 = mapness.Point.degrees(5.0, 0)
         self.track.add_point(p1)
@@ -39,7 +44,6 @@ class Ruler:
         self.track.connect("point_changed", self.on_point_changed)
 
         self.map.add_track(self.track)
-
 
         self.win.add(self.map)
         self.win.show_all()
