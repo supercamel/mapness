@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016 Samuel Cowen <samuel.cowen@camelsoftware.com>
+    Copyright (C) 2021 Samuel Cowen <samuel.cowen@camelsoftware.com>
 
     This file is part of mapness.
 

@@ -58,6 +58,7 @@ public class Track: Object
         color.parse("rgba(255, 0, 0, 0.9)");
         editable = false;
         line_width = 2;
+        dot_radius = 4;
         breakable = true;
     }
 
@@ -87,7 +88,7 @@ public class Track: Object
 /**
  * Adds a generic key/value to the point
  */
-    public void add_property(string name, Value? v) 
+    public void set_property(string name, Value? v) 
     {
         map.set(name, v);
     }
@@ -200,6 +201,9 @@ public class Track: Object
         a = color.alpha;
     }
 
+
+    public signal void point_clicked(uint n);
+
     /**
      * The point added signal is emited whenever a point is appended to the
      * end of the track.
@@ -247,6 +251,7 @@ public class Track: Object
      */
     public uint line_width { get; set; }
 
+    public uint dot_radius { get; set; }
     /**
      * If breakable is set to false, users will not be able to insert points
      * into an editable track.

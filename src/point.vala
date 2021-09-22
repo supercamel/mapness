@@ -119,7 +119,7 @@ public class Point: Object
 /**
  * Adds a generic key/value to the point
  */
-    public void add_property(string name, Value? v) 
+    public void set_property(string name, Value? v) 
     {
         map.set(name, v);
     }

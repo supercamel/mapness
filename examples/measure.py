@@ -22,8 +22,13 @@ class Ruler:
         self.win.set_title("Rule The World")
 
 
+        print("making map")
         self.map = mapness.Map.new()
-        self.map.set_source(mapness.Source.GOOGLESATELLITE)
+        print("here")
+
+        source = mapness.Source.new()
+        source.set_map_source(mapness.MapSource.GOOGLESATELLITE)
+        self.map.set_source(source)
 
         self.track = mapness.Track.new()
         self.track.set_color(1.0, 0.0, 0.0, 0.8)

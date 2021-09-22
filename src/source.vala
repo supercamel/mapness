@@ -53,11 +53,16 @@ public enum MapSource
     }
 }
 
-public class Source
+public class Source : Object
 {
-    public MapSource map_source;
+    public Source() 
+    {
+        map_source  = MapSource.OPENSTREETMAP;
+    }
 
-    public string custom_uri;
+    public MapSource map_source { get; set;}
+
+    public string custom_uri {get; set;}
 
     public string to_string()
     {
