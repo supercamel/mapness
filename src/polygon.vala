@@ -44,8 +44,8 @@ public class Polygon: Track
     public Polygon()
     {
         fill_center = false;
-        fill_color = new Gdk.RGBA();
-        fill_color.alpha = 1.0;
+        fill_color = Gdk.RGBA();
+        fill_color.alpha = 1.0f;
     }
 
     /**
@@ -55,10 +55,21 @@ public class Polygon: Track
      */
     public void set_fill_color(double r, double g, double b, double a)
     {
-        fill_color.red = r;
-        fill_color.green = g;
-        fill_color.blue = b;
-        fill_color.alpha = a;
+        fill_color.red = (float)r;
+        fill_color.green = (float)g;
+        fill_color.blue = (float)b;
+        fill_color.alpha = (float)a;
+    }
+
+    /**
+     * Gets the RGBA values for the fill area.
+     */
+    public void get_fill_color(out double r, out double g, out double b, out double a)
+    {
+        r = fill_color.red;
+        g = fill_color.green;
+        b = fill_color.blue;
+        a = fill_color.alpha;
     }
 
     /**
@@ -68,9 +79,8 @@ public class Polygon: Track
 
     /**
      * The fill colour. Default colour is yellow with a hint of transparency.
-     * It's pretty cool hey.
      */
-    public Gdk.RGBA fill_color;
+    private Gdk.RGBA fill_color;
 }
 
 }

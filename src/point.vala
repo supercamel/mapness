@@ -25,7 +25,7 @@ namespace mapness
 /**
  * Points are used to specify a location.
  *
- * Like tracks, they can have user-defined properties added to them
+ * Like tracks, they can have user-defined metadata added to them.
  */
 public class Point: Object
 {
@@ -47,7 +47,7 @@ public class Point: Object
     {
         rlat = 0;
         rlon = 0;
-        map = new HashMap<string, Value?>();
+        metadata = new HashMap<string, Value?>();
     }
 
 /**
@@ -55,7 +55,7 @@ public class Point: Object
  */
     public Point.degrees(double lat, double lon)
     {
-        map = new HashMap<string, Value?>();
+        metadata = new HashMap<string, Value?>();
 
         rlat = lat * (Math.PI/180.0);
         rlon = lon * (Math.PI/180.0);
@@ -66,7 +66,7 @@ public class Point: Object
  */
     public Point.radians(double lat, double lon)
     {
-        map = new HashMap<string, Value?>();
+        metadata = new HashMap<string, Value?>();
 
         rlat = lat;
         rlon = lon;
@@ -117,37 +117,37 @@ public class Point: Object
     public double rlon { get; set; }
 
 /**
- * Adds a generic key/value to the point
+ * Adds a generic key/value to the point.
  */
-    public void set_property(string name, Value? v) 
+    public void set_metadata(string name, Value? v)
     {
-        map.set(name, v);
+        metadata.set(name, v);
     }
 
 /**
- * true if the point has a property of this name
+ * Returns true if the point has metadata with this name.
  */
-    public bool has_property(string name) 
+    public bool has_metadata(string name)
     {
-        return name in map;
+        return metadata.has_key(name);
     }
 
 /**
- * Gets a value by key
+ * Gets a metadata value by key.
  */
-    public Value? get_property(string name)
+    public Value? get_metadata(string name)
     {
-        return map.get(name);
+        return metadata.get(name);
     }
 
 /**
- * Removes a property
+ * Removes a metadata value.
  */
-    public void remove_property(string name) 
+    public void remove_metadata(string name)
     {
-        if(name in map)
+        if(metadata.has_key(name))
         {
-            map.unset(name);
+            metadata.unset(name);
         }
     }
 
@@ -167,7 +167,7 @@ ________  ________  ___  ___      ___ ________  _________  _______
 ******************************************************************************/
 
 
-    private HashMap<string, Value?> map;
+    private HashMap<string, Value?> metadata;
 
 
 }

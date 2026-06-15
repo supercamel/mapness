@@ -42,7 +42,7 @@ public class Image: Object
     /**
      * Creates a new image from a file and positions it at a point.
      */
-    public Image.from_file(string path, Point pt)
+    public Image.from_file(string path, Point pt) throws Error
     {
         pixbuf = new Gdk.Pixbuf.from_file(path);
         width = pixbuf.get_width();

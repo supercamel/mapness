@@ -21,6 +21,31 @@ namespace mapness
 {
 
 /**
+ * PointerEvent is passed to layers when the map receives pointer input.
+ *
+ * It intentionally carries plain coordinates and button state instead of
+ * GTK event structs so layer implementations stay stable across GTK releases.
+ */
+public class PointerEvent: Object
+{
+    public PointerEvent(double x, double y, uint button = 0, uint n_press = 0,
+                        Gdk.ModifierType state = 0)
+    {
+        this.x = x;
+        this.y = y;
+        this.button = button;
+        this.n_press = n_press;
+        this.state = state;
+    }
+
+    public double x { get; set; }
+    public double y { get; set; }
+    public uint button { get; set; }
+    public uint n_press { get; set; }
+    public Gdk.ModifierType state { get; set; }
+}
+
+/**
  * Layers are used to draw your own stuff over the top of the map.
  * This is a base class.
  * To implement your own layer, you should create a class that inherits Layer
@@ -40,13 +65,13 @@ public interface Layer: Object
      * Override this to receive click events (mouse down).
      * Return true to prevent subsequent layers from receiving click events.
      */
-    public abstract bool on_click(Gdk.EventButton e);
+    public abstract bool on_click(PointerEvent event);
 
     /**
      * Override this to receive mouse motion events.
      * Return true to prevent subsequent layers from receiving these events.
      */
-    public abstract bool on_motion(Gdk.EventMotion e);
+    public abstract bool on_motion(PointerEvent event);
 
 }
 

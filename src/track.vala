@@ -30,9 +30,8 @@ namespace mapness
  * There are signals for the points on the track being addded, inserted, changed
  * and removed.
  *
- * Tracks can also store generic values called properties, not to be confused 
- * with normal object properties. They are key-value pairs stored with the object.
- * It's just to store extra data with your track.
+ * Tracks can also store generic metadata values. They are key-value pairs
+ * stored with the object, for extra application data.
  */
 
 public class Track: Object
@@ -53,8 +52,8 @@ public class Track: Object
     public Track()
     {
         points = new GLib.SList<Point>();
-        color = new Gdk.RGBA();
-        map = new HashMap<string, Value?>();
+        color = Gdk.RGBA();
+        metadata = new HashMap<string, Value?>();
         color.parse("rgba(255, 0, 0, 0.9)");
         editable = false;
         line_width = 2;
@@ -86,37 +85,37 @@ public class Track: Object
     }
 
 /**
- * Adds a generic key/value to the point
+ * Adds a generic metadata key/value to the track.
  */
-    public void set_property(string name, Value? v) 
+    public void set_metadata(string name, Value? v)
     {
-        map.set(name, v);
+        metadata.set(name, v);
     }
 
 /**
- * true if the point has a property of this name
+ * Returns true if the track has metadata with this name.
  */
-    public bool has_property(string name) 
+    public bool has_metadata(string name)
     {
-        return name in map;
+        return metadata.has_key(name);
     }
 
 /**
- * Gets a value by key
+ * Gets a metadata value by key.
  */
-    public Value? get_property(string name)
+    public Value? get_metadata(string name)
     {
-        return map.get(name);
+        return metadata.get(name);
     }
 
 /**
- * Removes a property
+ * Removes a metadata value.
  */
-    public void remove_property(string name) 
+    public void remove_metadata(string name)
     {
-        if(name in map)
+        if(metadata.has_key(name))
         {
-            map.unset(name);
+            metadata.unset(name);
         }
     }
 
@@ -184,10 +183,10 @@ public class Track: Object
      */
     public void set_color(double r, double g, double b, double a)
     {
-        color.red = r;
-        color.blue = b;
-        color.green = g;
-        color.alpha = a;
+        color.red = (float)r;
+        color.blue = (float)b;
+        color.green = (float)g;
+        color.alpha = (float)a;
     }
 
     /**
@@ -238,7 +237,7 @@ public class Track: Object
     /**
      * The Gdk.RGBA colour of the track.
      */
-    public Gdk.RGBA color;
+    private Gdk.RGBA color;
 
     /**
      * If true, the user will be able to insert points and move them around
@@ -264,7 +263,7 @@ public class Track: Object
      */
     public string name { get; set; }
 
-    private HashMap<string, Value?> map;
+    private HashMap<string, Value?> metadata;
 
 }
 

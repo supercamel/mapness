@@ -53,7 +53,6 @@ namespace mapness
         public Map()
         {
             map_source = new Source();
-            map_source.map_source  = MapSource.GOOGLEHYBRID;
             repo_uri = map_source.get_uri();
             uri_format = get_uri_format(repo_uri);
             cache_dir = get_default_cache_dir();
@@ -61,8 +60,8 @@ namespace mapness
 
             redraw_cycles = 0;
             redraw_flag = true;
-            zoom_max = 17;
-            zoom_min = 2;
+            max_zoom = map_source.get_max_zoom();
+            min_zoom = map_source.get_min_zoom();
             is_button_down = false;
             is_dragging_point = false;
             scroll_wheel = true;
@@ -83,70 +82,85 @@ namespace mapness
             session = new Soup.Session();
             session.user_agent = "mapnip";
 
-            add_events(Gdk.EventMask.BUTTON_PRESS_MASK);
-            add_events(Gdk.EventMask.BUTTON_RELEASE_MASK);
-            add_events(Gdk.EventMask.SCROLL_MASK);
-            add_events(Gdk.EventMask.POINTER_MOTION_MASK);
-            button_press_event.connect ((e) => {
+            set_draw_func(draw_map);
+            resize.connect((width, height) => {
+                if(width <= 0 || height <= 0)
+                    return;
+                position_viewport_at_center(width, height);
+                if(!has_pointer_position)
+                {
+                    last_pointer_x = width / 2.0;
+                    last_pointer_y = height / 2.0;
+                }
+                idle_redraw();
+            });
+
+            var click = new Gtk.GestureClick();
+            click.button = 0;
+            click.pressed.connect((n_press, x, y) => {
+                uint button = click.get_current_button();
+                var event = pointer_event(x, y, button, (uint)n_press,
+                                          click.get_current_event_state());
                 if(show_zoom_control == true)
                 {
-                    if(zoom_control.on_click(e) == true)
-                        return true;
+                    if(zoom_control.on_click(event) == true)
+                        return;
                 }
 
                 foreach(var layer in layers)
                 {
-                    if(layer.on_click(e) == true)
-                        return true;
+                    if(layer.on_click(event) == true)
+                        return;
                 }
-                if((int)e.button == 1)
+                if(button == 1)
                 {
-                    mouse_down_x = (int)e.x;
-                    mouse_down_y = (int)e.y;
+                    mouse_down_x = (int)x;
+                    mouse_down_y = (int)y;
                     is_button_down = true;
                     foreach(var track in tracks)
                     {
-                        if(check_track_click(e, track, false))
-                            return false;
+                        if(check_track_click(event, track, false))
+                            return;
                     }
                     foreach(var poly in polygons)
                     {
-                        if(check_track_click(e, poly, true))
-                            return false;
+                        if(check_track_click(event, poly, true))
+                            return;
                     }
-                    drag_start_x = (int)e.x;
-                    drag_start_y = (int)e.y;
+                    drag_start_x = (int)x;
+                    drag_start_y = (int)y;
                 }
-
-                return false;
             });
 
-            button_release_event.connect((e) => {
+            click.released.connect((n_press, x, y) => {
                 if(is_button_down == false)
-                    return false;
+                    return;
 
-                if((int)e.button == 1)
+                uint button = click.get_current_button();
+                if(button == 1)
                 {
                     is_button_down = false;
-                    int diff_x = (int)e.x-drag_start_x;
-                    int diff_y = (int)e.y-drag_start_y;
+                    int diff_x = (int)x-drag_start_x;
+                    int diff_y = (int)y-drag_start_y;
 
                     if(is_dragging_point == true)
                     {
                         is_dragging_point = false;
                         Point pt;
-                        screen_to_geographic((int)e.x, (int)e.y, out pt);
+                        screen_to_geographic((int)x, (int)y, out pt);
                         drag_point.rlat = pt.rlat;
                         drag_point.rlon = pt.rlon;
                         drag_track.point_changed(drag_point);
 
                         
-                        if((((int)e.x - mouse_down_x) + ((int)e.y - mouse_down_y)) < 5) 
+                        int click_dx = (int)x - mouse_down_x;
+                        int click_dy = (int)y - mouse_down_y;
+                        if((click_dx * click_dx) + (click_dy * click_dy) < 25)
                         {
                             drag_track.point_clicked(drag_point_n);
                         }
                         idle_redraw();
-                        return false;
+                        return;
                     }
 
                     drag_mouse_dx = 0;
@@ -154,47 +168,46 @@ namespace mapness
 
                     map_x -= diff_x;
                     map_y -= diff_y;
+                    clamp_viewport();
                     update_center_coord();
                     idle_redraw();
                 }
-                return false;
             });
-            scroll_event.connect((e) => {
+
+            var scroll = new Gtk.EventControllerScroll(
+                Gtk.EventControllerScrollFlags.VERTICAL |
+                Gtk.EventControllerScrollFlags.DISCRETE);
+            scroll.scroll.connect((dx, dy) => {
                 if(scroll_wheel == false)
                     return false;
 
-                Point pt;
-                screen_to_geographic((int)e.x, (int)e.y, out pt);
-                Point center = new Point.radians(center_rlat, center_rlon);
-
-                if(e.direction == Gdk.ScrollDirection.UP)
-                {
-                    Point p = new Point.degrees(center.get_lat() + ((pt.get_lat() - center.get_lat())/2.0),
-                    center.get_lon() + ((pt.get_lon() - center.get_lon())/2.0));
-                    if(map_zoom < zoom_max)
-                        set_center_and_zoom(p, map_zoom+1);
-                }
-                else
-                {
-                    Point p = new Point.degrees(center.get_lat() + ((center.get_lat() - pt.get_lat())*1.0),
-                    center.get_lon() + ((center.get_lon() - pt.get_lon())*1.0));
-                    if(map_zoom > zoom_min)
-                        set_center_and_zoom(p, map_zoom-1);
-                }
-
-                idle_redraw();
-                return false;
+                if(dy < 0)
+                    zoom_around(map_zoom + 1, last_pointer_x, last_pointer_y);
+                else if(dy > 0)
+                    zoom_around(map_zoom - 1, last_pointer_x, last_pointer_y);
+                return true;
             });
 
-            motion_notify_event.connect((e) => {
+            var motion = new Gtk.EventControllerMotion();
+            motion.enter.connect((x, y) => {
+                last_pointer_x = x;
+                last_pointer_y = y;
+                has_pointer_position = true;
+            });
+            motion.motion.connect((x, y) => {
+                last_pointer_x = x;
+                last_pointer_y = y;
+                has_pointer_position = true;
+                var event = pointer_event(x, y, 0, 0,
+                                          motion.get_current_event_state());
                 if(show_zoom_control)
                 {
-                    if(zoom_control.on_motion(e) == true)
-                        return false;
+                    if(zoom_control.on_motion(event) == true)
+                        return;
                 }
 
                 Point pt;
-                screen_to_geographic((int)e.x, (int)e.y, out pt);
+                screen_to_geographic((int)x, (int)y, out pt);
 
                 if(is_dragging_point)
                 {
@@ -206,17 +219,20 @@ namespace mapness
                 {
                     if(is_button_down == true)
                     {
-                        drag_mouse_dx = (int)e.x-drag_start_x;
-                        drag_mouse_dy = (int)e.y-drag_start_y;
+                        drag_mouse_dx = (int)x-drag_start_x;
+                        drag_mouse_dy = (int)y-drag_start_y;
                         redraw_canvas();
                     }
                 }
-                return false;
             });
+
+            add_controller(click);
+            add_controller(scroll);
+            add_controller(motion);
         }
 
         /**
-         * Sets the map source. Maps are sourced from GoogleHybrid by default.
+         * Sets the map source. Maps are sourced from OpenStreetMap by default.
          */
         public void set_source(Source source)
         {
@@ -225,7 +241,18 @@ namespace mapness
             uri_format = get_uri_format(repo_uri);
             cache_dir = get_default_cache_dir();
             image_format = map_source.get_format();
+            min_zoom = map_source.get_min_zoom();
+            max_zoom = map_source.get_max_zoom();
+            map_zoom = map_zoom.clamp(min_zoom, max_zoom);
             idle_redraw();
+        }
+
+        /**
+         * Convenience wrapper for switching to a built-in map source.
+         */
+        public void set_map_source(MapSource source)
+        {
+            set_source(new Source.with_map_source(source));
         }
 
         /**
@@ -262,21 +289,21 @@ namespace mapness
             return tracks.length(); 
         }
 
-        public void get_track_by_index(uint pos, out Track t) 
+        public Track? get_track_by_index(uint pos)
         {
-            t = tracks.nth_data(pos);
+            return tracks.nth_data(pos);
         }
 
-        public void get_track_by_name(string name, out Track t) 
+        public Track? get_track_by_name(string name)
         {
             foreach(var track in tracks)
             {
                 if(track.name == name)
                 {
-                    t = track; 
-                    return;
+                    return track;
                 }
             }
+            return null;
         }
 
 
@@ -306,10 +333,8 @@ namespace mapness
 
         public void clear_tracks()
         {
-            foreach(var track in tracks)
-            {
-                tracks.remove(track);
-            }
+            tracks = new GLib.SList<Track>();
+            idle_redraw();
         }
 
         /**
@@ -377,8 +402,8 @@ namespace mapness
          */
         public void download_maps(Point pt1, Point pt2, int zoom_start, int zoom_end)
         {
-            zoom_end = zoom_end.clamp(zoom_min, zoom_max);
-            zoom_start = zoom_start.clamp(zoom_min, zoom_max);
+            zoom_end = zoom_end.clamp(min_zoom, max_zoom);
+            zoom_start = zoom_start.clamp(min_zoom, max_zoom);
 
             for(int zoom = zoom_start; zoom <= zoom_end; zoom++)
             {
@@ -423,17 +448,16 @@ namespace mapness
          */
         public void set_center(Point pt)
         {
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
-
-            center_rlat = pt.rlat;
+            center_rlat = clamp_latitude(pt.rlat);
             center_rlon = pt.rlon;
 
             int pixel_x = lon2pixel(map_zoom, center_rlon);
             int pixel_y = lat2pixel(map_zoom, center_rlat);
 
-            map_x = pixel_x - allocation.width/2;
-            map_y = pixel_y - allocation.height/2;
+            map_x = pixel_x - get_width()/2;
+            map_y = pixel_y - get_height()/2;
+            if(clamp_viewport())
+                update_center_coord();
             idle_redraw();
         }
 
@@ -442,16 +466,15 @@ namespace mapness
          */
         public void set_zoom(int zoom)
         {
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
+            int width_center  = get_width() / 2;
+            int height_center = get_height() / 2;
 
-            int width_center  = allocation.width / 2;
-            int height_center = allocation.height / 2;
-
-            map_zoom = zoom.clamp(zoom_min, zoom_max);
+            map_zoom = zoom.clamp(min_zoom, max_zoom);
 
             map_x = lon2pixel(map_zoom, center_rlon) - width_center;
             map_y = lat2pixel(map_zoom, center_rlat) - height_center;
+            if(clamp_viewport())
+                update_center_coord();
 
             idle_redraw();
         }
@@ -461,7 +484,7 @@ namespace mapness
          */
         public void set_center_and_zoom(Point pt, int zoom)
         {
-            set_zoom(zoom);
+            map_zoom = zoom.clamp(min_zoom, max_zoom);
             set_center(pt);
         }
 
@@ -470,12 +493,30 @@ namespace mapness
          */
         public void get_bounds(out Point top_left, out Point lower_right)
         {
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
-
             screen_to_geographic(0, 0, out top_left);
-            screen_to_geographic(allocation.width, allocation.height,
+            screen_to_geographic(get_width(), get_height(),
                                  out lower_right);
+        }
+
+        /**
+         * Returns the closest zoom level that fits two points in the current widget.
+         */
+        public int get_zoom_for_bounds(Point pt1, Point pt2)
+        {
+            if(get_width() <= 0 || get_height() <= 0)
+                return map_zoom.clamp(min_zoom, max_zoom);
+
+            double lat1 = double.min(pt1.rlat, pt2.rlat);
+            double lat2 = double.max(pt1.rlat, pt2.rlat);
+            double lon1 = double.min(pt1.rlon, pt2.rlon);
+            double lon2 = double.max(pt1.rlon, pt2.rlon);
+
+            if(Math.fabs(lat2 - lat1) < double.EPSILON ||
+               Math.fabs(lon2 - lon1) < double.EPSILON)
+                return max_zoom;
+
+            return latlon2zoom(get_height(), get_width(), lat1, lat2, lon1, lon2)
+                .clamp(min_zoom, max_zoom);
         }
 
         /**
@@ -530,6 +571,16 @@ namespace mapness
          */
         public bool show_zoom_control { get; set; }
 
+        /**
+         * The lowest zoom level the map will allow.
+         */
+        public int min_zoom { get; set; }
+
+        /**
+         * The highest zoom level the map will allow.
+         */
+        public int max_zoom { get; set; }
+
 
 
 
@@ -549,17 +600,81 @@ namespace mapness
 
         private bool redraw_canvas ()
         {
-            var window = get_window ();
-            if (null == window)
-                return false;
-
-            var region = window.get_clip_region ();
-            window.invalidate_region (region, true);
-            window.process_updates (true);
+            queue_draw();
             return false;
         }
 
-        private bool check_track_click(Gdk.EventButton e, Track track, bool is_poly)
+        private void zoom_around(int zoom, double x, double y)
+        {
+            int new_zoom = zoom.clamp(min_zoom, max_zoom);
+            if(new_zoom == map_zoom)
+                return;
+
+            Point anchor;
+            screen_to_geographic((int)Math.round(x), (int)Math.round(y), out anchor);
+
+            map_zoom = new_zoom;
+            map_x = lon2pixel(map_zoom, anchor.rlon) - (int)Math.round(x);
+            map_y = lat2pixel(map_zoom, anchor.rlat) - (int)Math.round(y);
+            clamp_viewport();
+            update_center_coord();
+            idle_redraw();
+        }
+
+        private bool clamp_viewport()
+        {
+            return clamp_viewport_for_size(get_width(), get_height());
+        }
+
+        private bool clamp_viewport_for_size(int width, int height)
+        {
+            int old_x = map_x;
+            int old_y = map_y;
+            int world = world_size_pixels(map_zoom);
+            map_x = clamp_axis(map_x, world, width);
+            map_y = clamp_axis(map_y, world, height);
+            return map_x != old_x || map_y != old_y;
+        }
+
+        private void position_viewport_at_center(int width, int height)
+        {
+            map_x = lon2pixel(map_zoom, center_rlon) - width / 2;
+            map_y = lat2pixel(map_zoom, center_rlat) - height / 2;
+            if(clamp_viewport_for_size(width, height))
+                update_center_coord_for_size(width, height);
+        }
+
+        private int clamp_axis(int value, int world, int viewport)
+        {
+            if(viewport <= 0)
+                return value;
+            if(world <= viewport)
+                return (world - viewport) / 2;
+            return value.clamp(0, world - viewport);
+        }
+
+        private int world_size_pixels(int zoom)
+        {
+            return TILESIZE * (1 << zoom);
+        }
+
+        private double clamp_latitude(double lat)
+        {
+            if(lat < -MAX_MERCATOR_LAT)
+                return -MAX_MERCATOR_LAT;
+            if(lat > MAX_MERCATOR_LAT)
+                return MAX_MERCATOR_LAT;
+            return lat;
+        }
+
+        private PointerEvent pointer_event(double x, double y, uint button = 0,
+                                           uint n_press = 0,
+                                           Gdk.ModifierType state = 0)
+        {
+            return new PointerEvent(x, y, button, n_press, state);
+        }
+
+        private bool check_track_click(PointerEvent event, Track track, bool is_poly)
         {
 
 
@@ -576,7 +691,7 @@ namespace mapness
                     int cx;
                     int cy;
                     geographic_to_screen(point, out cx, out cy);
-                    double dist_sqrd = (e.x-cx)*(e.x-cx) + (e.y-cy)*(e.y-cy);
+                    double dist_sqrd = (event.x-cx)*(event.x-cx) + (event.y-cy)*(event.y-cy);
                     if(dist_sqrd <= ((track.dot_radius + 1) * (track.dot_radius + 1)))
                     {
                         is_button_down = true;
@@ -591,7 +706,7 @@ namespace mapness
                     {
                         int ptx = (last_x+cx)/2;
                         int pty = (last_y+cy)/2;
-                        dist_sqrd = (e.x - ptx) * (e.x-ptx) + (e.y-pty) * (e.y-pty);
+                        dist_sqrd = (event.x - ptx) * (event.x-ptx) + (event.y-pty) * (event.y-pty);
                         if((dist_sqrd <= ((track.dot_radius+ 1) * (track.dot_radius+ 1)))
                            && (track.breakable == true))
                         {
@@ -617,8 +732,8 @@ namespace mapness
                 {
                     int ptx = (last_x+first_x)/2;
                     int pty = (last_y+first_y)/2;
-                    double dist_sqrd = (e.x - ptx) * (e.x-ptx) +
-                        (e.y-pty) * (e.y-pty);
+                    double dist_sqrd = (event.x - ptx) * (event.x-ptx) +
+                        (event.y-pty) * (event.y-pty);
                     if(dist_sqrd <= ((track.dot_radius+ 1) * (track.dot_radius+ 1)))
                     {
                         is_button_down = false;
@@ -663,102 +778,137 @@ namespace mapness
             dl.map = this;
             dl.redraw = redraw;
 
-            var msg = new Soup.Message("GET", dl.uri);
-            if(msg != null)
-            {
-                if(uri_format.is_google == true)
-                {
-                    msg.request_headers.append("Referer", "http://maps.google.com/");
+            tile_queue.append(dl.uri);
+            download_tile_async.begin(dl);
+        }
 
-                    if(uri_format.has_q)
-                    {
-                        var gc = GLib.Environment.get_variable("GOOGLE_COOKIE");
+        private Soup.Message create_tile_message(string uri)
+        {
+            var msg = new Soup.Message("GET", uri);
+            if(uri_format.is_google == true)
+            {
+                msg.request_headers.append("Referer", "http://maps.google.com/");
+
+                if(uri_format.has_q)
+                {
+                    var gc = GLib.Environment.get_variable("GOOGLE_COOKIE");
+                    if(gc != null)
                         msg.request_headers.append("Cookie", gc);
-                    }
                 }
-                tile_queue.append(dl.uri);
-                session.queue_message(msg, (session, msg) => {
-                    bool file_saved = false;
-                    if(msg.status_code == Soup.Status.OK)
+            }
+            return msg;
+        }
+
+        private async void download_tile_async(TileDownload dl)
+        {
+            while(dl.ttl > 0)
+            {
+                var msg = create_tile_message(dl.uri);
+                try
+                {
+                    var body = yield session.send_and_read_async(msg, GLib.Priority.DEFAULT, null);
+                    var status = msg.get_status();
+                    if(status == Soup.Status.OK)
                     {
-                        //save file
+                        bool file_saved = false;
                         try
                         {
-                            File file = File.new_for_path(dl.folder);
-                            try {
-                                file.make_directory_with_parents();
-                            }
-                            catch(Error e) { }
-
-                            file = File.new_for_path(dl.filename);
-                            var file_stream = file.create(FileCreateFlags.REPLACE_DESTINATION);
-                            file_stream.write(msg.response_body.data);
+                            save_tile(dl, body);
                             file_saved = true;
-
-                            if(dl.redraw == true)
-                            {
-                                CachedTile tile = CachedTile();
-                                if(file_saved == true)
-                                {
-                                    tile.pixbuf = new Gdk.Pixbuf.from_file(dl.filename);
-                                    tile.redraw_cycles = redraw_cycles;
-                                    tile_cache.insert(dl.filename, tile);
-                                }
-                                else
-                                {
-                                    string extension = dl.filename.substring(int.max(0, dl.filename.length - 4));
-                                    var loader = new Gdk.PixbufLoader.with_type(extension);
-                                    loader.write(msg.response_body.data);
-                                    loader.close();
-
-                                    tile.pixbuf = loader.get_pixbuf();
-                                    tile.redraw_cycles = redraw_cycles;
-                                    tile_cache.insert(dl.filename, tile);
-                                }
-
-                                idle_redraw();
-                            }
-                            tile_queue.remove(dl.uri);
                         }
                         catch(Error e)
                         {
                         }
-                    }
-                    else
-                    {
-                        if((msg.status_code == Soup.Status.NOT_FOUND)
-                           || (msg.status_code == Soup.Status.FORBIDDEN))
+
+                        if(dl.redraw == true)
                         {
-                            missing_tiles.append(dl.uri);
-                            tile_queue.remove(dl.uri);
+                            cache_downloaded_tile(dl, body, file_saved);
+                            idle_redraw();
                         }
-                        else if(msg.status_code == Soup.Status.CANCELLED)
-                            tile_queue.remove(dl.uri);
-                        else
-                        {
-                            dl.ttl--;
-                            if(dl.ttl > 0)
-                            {
-                                session.requeue_message(msg);
-                                print(msg.status_code.to_string() + "\n");
-                                return;
-                            }
-                            else
-                            {
-                                print("Failed to download " + dl.filename + "\n");
-                            }
-                            tile_queue.remove(dl.uri);
-                        }
+                        tile_queue.remove(dl.uri);
+                        return;
                     }
 
-                });
+                    if((status == Soup.Status.NOT_FOUND) || (status == Soup.Status.FORBIDDEN))
+                    {
+                        missing_tiles.append(dl.uri);
+                        tile_queue.remove(dl.uri);
+                        return;
+                    }
+
+                    dl.ttl--;
+                    if(dl.ttl <= 0)
+                    {
+                        print("Failed to download %s: HTTP %u\n".printf(dl.filename, (uint)status));
+                    }
+                }
+                catch(Error e)
+                {
+                    dl.ttl--;
+                    if(dl.ttl <= 0)
+                    {
+                        print("Failed to download %s: %s\n".printf(dl.filename, e.message));
+                    }
+                }
+            }
+
+            tile_queue.remove(dl.uri);
+        }
+
+        private void save_tile(TileDownload dl, GLib.Bytes body) throws Error
+        {
+            File folder = File.new_for_path(dl.folder);
+            try
+            {
+                folder.make_directory_with_parents();
+            }
+            catch(Error e)
+            {
+            }
+
+            File file = File.new_for_path(dl.filename);
+            var file_stream = file.replace(null, false, FileCreateFlags.REPLACE_DESTINATION);
+            size_t bytes_written;
+            unowned uint8[]? data = body.get_data();
+            if(data != null)
+                file_stream.write_all(data, out bytes_written);
+        }
+
+        private void cache_downloaded_tile(TileDownload dl, GLib.Bytes body, bool file_saved)
+        {
+            try
+            {
+                CachedTile tile = CachedTile();
+                if(file_saved == true)
+                {
+                    tile.pixbuf = new Gdk.Pixbuf.from_file(dl.filename);
+                }
+                else
+                {
+                    string extension = dl.filename.substring(int.max(0, dl.filename.length - 3));
+                    var loader = new Gdk.PixbufLoader.with_type(extension);
+                    loader.write_bytes(body);
+                    loader.close();
+
+                    var pixbuf = loader.get_pixbuf();
+                    if(pixbuf == null)
+                        return;
+                    tile.pixbuf = pixbuf;
+                }
+                tile.redraw_cycles = redraw_cycles;
+                tile_cache.insert(dl.filename, tile);
+            }
+            catch(Error e)
+            {
             }
         }
 
-        private bool find_bigger_tile(out Gdk.Pixbuf pb, out int zoom_found, int zoom, int x, int y)
+        private bool find_bigger_tile(out Gdk.Pixbuf? pb, out int zoom_found, int zoom, int x, int y)
         {
             int next_zoom, next_x, next_y;
 
+            pb = null;
+            zoom_found = 0;
             if (zoom == 0)
                 return false;
             next_zoom = zoom - 1;
@@ -772,8 +922,9 @@ namespace mapness
             return true;
         }
 
-        private bool load_cached_tile(out Gdk.Pixbuf pb, int zoom, int x, int y)
+        private bool load_cached_tile(out Gdk.Pixbuf? pb, int zoom, int x, int y)
         {
+            pb = null;
             string filename = "%s%c%d%c%d%c%d.%s".printf(
                 cache_dir, GLib.Path.DIR_SEPARATOR,
                 zoom, GLib.Path.DIR_SEPARATOR,
@@ -803,12 +954,13 @@ namespace mapness
             return true;
         }
 
-        private bool render_missing_tile_upscaled(out Gdk.Pixbuf pixbuf, int zoom, int x, int y)
+        private bool render_missing_tile_upscaled(out Gdk.Pixbuf? pixbuf, int zoom, int x, int y)
         {
             int zoom_big;
-            Gdk.Pixbuf big;
+            Gdk.Pixbuf? big;
 
-            if(find_bigger_tile(out big, out zoom_big, zoom, x, y) == false)
+            pixbuf = null;
+            if(find_bigger_tile(out big, out zoom_big, zoom, x, y) == false || big == null)
                 return false;
 
             pixbuf = render_tile_upscaled(big, zoom_big, zoom, x, y);
@@ -827,7 +979,7 @@ namespace mapness
             return area.scale_simple(TILESIZE, TILESIZE, Gdk.InterpType.BILINEAR);
         }
 
-        private bool render_missing_tile(out Gdk.Pixbuf ret, int zoom, int x, int y)
+        private bool render_missing_tile(out Gdk.Pixbuf? ret, int zoom, int x, int y)
         {
             bool rt = render_missing_tile_upscaled(out ret, zoom, x, y);
             return rt;
@@ -856,17 +1008,18 @@ namespace mapness
                 zoom, GLib.Path.DIR_SEPARATOR,
                 x, GLib.Path.DIR_SEPARATOR,
                 y, image_format);
-            Gdk.Pixbuf pixbuf;
+            Gdk.Pixbuf? pixbuf;
             try
             {
                 if(load_cached_tile(out pixbuf, zoom, x, y) == false)
                     pixbuf = new Gdk.Pixbuf.from_file(filename);
-                blit_tile(pixbuf, cr, offset_x, offset_y, zoom, x, y);
+                if(pixbuf != null)
+                    blit_tile(pixbuf, cr, offset_x, offset_y, zoom, x, y);
             }
             catch(Error e)
             {
                 download_tile(zoom, x, y, true);
-                if(render_missing_tile(out pixbuf, zoom, x, y) == true)
+                if(render_missing_tile(out pixbuf, zoom, x, y) == true && pixbuf != null)
                     blit_tile(pixbuf, cr, offset_x, offset_y, zoom, x, y);
                 else
                     draw_blank_tile(cr, offset_x, offset_y);
@@ -875,9 +1028,6 @@ namespace mapness
 
         private void draw_tiles(Cairo.Context cr)
         {
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
-
             int offset_x = -map_x%TILESIZE;
             int offset_y = -map_y%TILESIZE;
             if(offset_x > 0)
@@ -887,8 +1037,8 @@ namespace mapness
 
             int offset_yn = offset_y;
 
-            int tiles_nx = (allocation.width  - offset_x) / TILESIZE + 1;
-            int tiles_ny = (allocation.height - offset_y) / TILESIZE + 1;
+            int tiles_nx = (get_width()  - offset_x) / TILESIZE + 1;
+            int tiles_ny = (get_height() - offset_y) / TILESIZE + 1;
 
             int tile_x0 = (int)Math.floor((float)map_x / (float)TILESIZE);
             int tile_y0 = (int)Math.floor((float)map_y / (float)TILESIZE);
@@ -911,8 +1061,12 @@ namespace mapness
 
         private void draw_track(Cairo.Context cr, Track track, bool is_poly)
         {
-            cr.set_source_rgba(track.color.red, track.color.green,
-                               track.color.blue, track.color.alpha);
+            double red;
+            double green;
+            double blue;
+            double alpha;
+            track.get_color(out red, out green, out blue, out alpha);
+            cr.set_source_rgba(red, green, blue, alpha);
 
             cr.set_line_width(track.line_width);
             int last_x = 0;
@@ -945,10 +1099,10 @@ namespace mapness
                     cr.fill();
                     if(count > 0)
                     {
-                        cr.set_source_rgba(track.color.red, track.color.green, track.color.blue, (double)track.color.alpha*0.7);
+                        cr.set_source_rgba(red, green, blue, alpha*0.7);
                         cr.arc((last_x + x)/2.0, (last_y+y)/2.0, track.dot_radius, 0.0, 2.0*Math.PI);
                         cr.fill();
-                        cr.set_source_rgba(track.color.red, track.color.green, track.color.blue, track.color.alpha);
+                        cr.set_source_rgba(red, green, blue, alpha);
                     }
                 }
 
@@ -993,7 +1147,12 @@ namespace mapness
         {
             foreach(var poly in polygons)
             {
-                cr.set_source_rgba(poly.fill_color.red, poly.fill_color.green, poly.fill_color.blue, poly.fill_color.alpha);
+                double red;
+                double green;
+                double blue;
+                double alpha;
+                poly.get_fill_color(out red, out green, out blue, out alpha);
+                cr.set_source_rgba(red, green, blue, alpha);
 
                 int first_x = 0;
                 int first_y = 0;
@@ -1024,7 +1183,8 @@ namespace mapness
 
                 draw_track(cr, poly, true);
 
-                cr.set_source_rgba(poly.color.red, poly.color.green, poly.color.blue, (double)poly.color.alpha*0.7);
+                poly.get_color(out red, out green, out blue, out alpha);
+                cr.set_source_rgba(red, green, blue, alpha*0.7);
                 cr.arc((last_x + first_x)/2.0, (last_y+first_y)/2.0, poly.dot_radius, 0.0, 2.0*Math.PI);
                 cr.fill();
             }
@@ -1032,14 +1192,11 @@ namespace mapness
 
         private void draw_layers(Cairo.Context cr)
         {
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
-
             foreach(var layer in layers)
-                layer.draw(cr, allocation.width, allocation.height);
+                layer.draw(cr, get_width(), get_height());
         }
 
-        protected override bool draw(Cairo.Context cr)
+        private void draw_map(Gtk.DrawingArea drawing_area, Cairo.Context cr, int width, int height)
         {
             redraw_cycles++;
             draw_tiles(cr);
@@ -1048,13 +1205,10 @@ namespace mapness
             draw_images(cr);
             draw_layers(cr);
 
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
             if(show_zoom_control == true)
-                zoom_control.draw(cr, allocation.width, allocation.height);
+                zoom_control.draw(cr, width, height);
 
             redraw_flag = true;
-            return true;
         }
 
         private void draw_blank_tile(Cairo.Context cr, int offset_x, int offset_y)
@@ -1098,7 +1252,7 @@ namespace mapness
             if(uri_format.has_z)
                 url = replace_first(url, URI_MARKER_Z, zoom.to_string());
             if(uri_format.has_s)
-                url = replace_first(url, URI_MARKER_S, (zoom_max-zoom).to_string());
+                url = replace_first(url, URI_MARKER_S, (max_zoom-zoom).to_string());
             ///TODO quad tree isn't needed for our map sources, but for 100% OsmGpsMap
             //compatibility it should be included one day
             if(uri_format.has_q0)
@@ -1134,7 +1288,7 @@ namespace mapness
              * pixel_y = -(2^zoom * TILESIZE * lat_m) / 2PI + (2^zoom * TILESIZE) / 2
              */
             pixel_y = -(int)( (lat_m * TILESIZE * (1 << zoom) ) / (2*Math.PI)) +
-                ((1 << zoom) * (TILESIZE/2) );
+                (world_size_pixels(zoom) / 2);
 
             return pixel_y;
         }
@@ -1148,7 +1302,7 @@ namespace mapness
              * pixel_x = (2^zoom * TILESIZE * lon) / 2PI + (2^zoom * TILESIZE) / 2
              */
             pixel_x = (int)(( lon * TILESIZE * (1 << zoom) ) / (2*Math.PI)) +
-                ( (1 << zoom) * (TILESIZE/2) );
+                (world_size_pixels(zoom) / 2);
             return pixel_x;
         }
 
@@ -1185,11 +1339,13 @@ namespace mapness
 
         private void update_center_coord()
         {
-            Gtk.Allocation allocation;
-            get_allocation(out allocation);
+            update_center_coord_for_size(get_width(), get_height());
+        }
 
-            int pixel_x = map_x + allocation.width/2;
-            int pixel_y = map_y + allocation.height/2;
+        private void update_center_coord_for_size(int width, int height)
+        {
+            int pixel_x = map_x + width/2;
+            int pixel_y = map_y + height/2;
 
             center_rlon = pixel2lon(map_zoom, pixel_x);
             center_rlat = pixel2lat(map_zoom, pixel_y);
@@ -1216,8 +1372,6 @@ namespace mapness
         private string repo_uri;
         private UriFormat uri_format;
 
-        private int zoom_min;
-        private int zoom_max;
         private int map_zoom;
 
         private int map_x;
@@ -1230,12 +1384,17 @@ namespace mapness
         private int mouse_down_x;
         private int mouse_down_y;
 
+        private double last_pointer_x;
+        private double last_pointer_y;
+        private bool has_pointer_position;
+
         private double center_rlon;
         private double center_rlat;
 
         private const int TILESIZE = 256;
         private const int MAX_DOWNLOAD_TILES = 25000;
         private const int DOWNLOAD_RETRIES = 10;
+        private const double MAX_MERCATOR_LAT = 1.4844222297453324;
 
         private uint redraw_cycles;
 

@@ -81,25 +81,25 @@ private class ZoomControl: Object, Layer
         last_height = height;
     }
 
-    public bool on_click(Gdk.EventButton e)
+    public bool on_click(PointerEvent event)
     {
         int x_pos = last_width-70;
         int y_pos = last_height-100;
         int ctrl_width = 40;
         int ctrl_height = 80;
 
-        if((e.x > x_pos) && (e.x < (x_pos+ctrl_width)))
+        if((event.x > x_pos) && (event.x < (x_pos+ctrl_width)))
         {
-            if((e.y > y_pos) && (e.y < y_pos+ctrl_height/2))
+            if((event.y > y_pos) && (event.y < y_pos+ctrl_height/2))
             {
                 zoom_changed(1);
                 return true;
             }
         }
 
-        if((e.x > x_pos) && (e.x < (x_pos+ctrl_width)))
+        if((event.x > x_pos) && (event.x < (x_pos+ctrl_width)))
         {
-            if((e.y > y_pos+ctrl_height/2) && (e.y < y_pos+ctrl_height))
+            if((event.y > y_pos+ctrl_height/2) && (event.y < y_pos+ctrl_height))
             {
                 zoom_changed(-1);
                 return true;
@@ -109,7 +109,7 @@ private class ZoomControl: Object, Layer
         return false;
     }
 
-    public bool on_motion(Gdk.EventMotion e)
+    public bool on_motion(PointerEvent event)
     {
         int x_pos = last_width-70;
         int y_pos = last_height-100;
@@ -118,9 +118,9 @@ private class ZoomControl: Object, Layer
 
         double orig_shade = shade_mul;
         shade_mul = 0.2;
-        if((e.x > x_pos) && (e.x < (x_pos+ctrl_width)))
+        if((event.x > x_pos) && (event.x < (x_pos+ctrl_width)))
         {
-            if((e.y > y_pos) && (e.y < y_pos+ctrl_height))
+            if((event.y > y_pos) && (event.y < y_pos+ctrl_height))
             {
                 shade_mul = 0.4;
             }

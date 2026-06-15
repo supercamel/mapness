@@ -58,6 +58,19 @@ public class Source : Object
     public Source() 
     {
         map_source  = MapSource.OPENSTREETMAP;
+        custom_uri = "";
+    }
+
+    public Source.with_map_source(MapSource map_source)
+    {
+        this.map_source = map_source;
+        custom_uri = "";
+    }
+
+    public Source.custom(string uri)
+    {
+        map_source = MapSource.OSM_CUSTOM;
+        custom_uri = uri;
     }
 
     public MapSource map_source { get; set;}
@@ -77,7 +90,7 @@ public class Source : Object
     {
         switch(map_source) {
             case MapSource.OPENSTREETMAP:
-                return "http://tile.OPENSTREETMAP.org/#Z/#X/#Y.png";
+                return "https://tile.openstreetmap.org/#Z/#X/#Y.png";
             case MapSource.GOOGLESTREET:
                 return "http://mt#R.google.com/vt/lyrs=m&hl=en&x=#X&s=&y=#Y&z=#Z";
             case MapSource.GOOGLESATELLITE:
@@ -85,7 +98,7 @@ public class Source : Object
             case MapSource.GOOGLEHYBRID:
                 return "http://mt#R.google.com/vt/lyrs=y&hl=en&x=#X&s=&y=#Y&z=#Z";
             case MapSource.OSM_CUSTOM:
-                return custom_uri + "/#Z/#X/#Y.png";
+                return trim_trailing_slashes(custom_uri) + "/#Z/#X/#Y.png";
         }
         return "";
     }
@@ -109,6 +122,14 @@ public class Source : Object
     public int get_max_zoom()
     {
         return 17;
+    }
+
+    private string trim_trailing_slashes(string uri)
+    {
+        string trimmed = uri;
+        while(trimmed.has_suffix("/") && trimmed.length > 0)
+            trimmed = trimmed.substring(0, trimmed.length - 1);
+        return trimmed;
     }
 }
 
